@@ -70,15 +70,28 @@ func Main() {
 	errors.Check(wg.Wait())
 }
 
-func addCommands(ctx context.Context, cmd *flags.Parser, subcommands []Command, curr *cmdr) {
+type Parser interface {
+	AddCommand(command string, shortDescription string, longDescription string, data interface{}) (*flags.Command, error)
+	AddGroup(shortDescription string, longDescription string, data interface{}) (*flags.Group, error)
+}
+
+func addCommands(ctx context.Context, cmd Parser, subcommands []Command, curr *cmdr) {
 	for _, c := range subcommands {
-		name := c.Name()
-		l, s := c.Description()
-		errors.Get(cmd.AddCommand(name, l, s, &cmdr{
+		curr := &cmdr{
 			ctx:     ctx,
-			cmd:     c,
+			exec:    c.Execute,
 			prevCmd: curr,
-		}))
+		}
+
+		sub := errors.Get(cmd.AddCommand(c.Name(), "", "", curr))
+		errors.Get(sub.AddGroup(func(l, s string) (string, string, any) { return s, l, c }(c.Description())))
+
+		if sc, ok := c.(Subcommander); ok {
+			if _, ok := c.(ExecSubcommander); !ok {
+				curr.exec = _NOOPExec
+			}
+			addCommands(ctx, sub, sc.Subcommands(), curr)
+		}
 	}
 }
 
