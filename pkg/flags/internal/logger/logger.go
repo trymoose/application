@@ -2,17 +2,19 @@ package logger
 
 import (
 	"context"
-	"github.com/trymoose/application/internal/pkg/flags/internal/logger/handler"
-	"github.com/trymoose/application/internal/pkg/flags/internal/logger/level"
-	"github.com/trymoose/application/internal/pkg/flags/internal/logger/output"
-	"github.com/trymoose/application/internal/pkg/flags/internal/logger/source"
+	"github.com/trymoose/application/pkg/flags/internal/logger/handler"
+	"github.com/trymoose/application/pkg/flags/internal/logger/level"
+	"github.com/trymoose/application/pkg/flags/internal/logger/output"
+	"github.com/trymoose/application/pkg/flags/internal/logger/source"
 	"io"
 	"log/slog"
 )
 
-func (*Logger) Name() string  { return "logger" }
-func (*Logger) Short() string { return "Logger options." }
-func (*Logger) Long() string  { return "Arguments that change the behavior of the logger." }
+const (
+	Name  = "logger"
+	Short = "Logger options."
+	Long  = "Arguments that change the behavior of the logger."
+)
 
 type Logger struct {
 	level.LevelOptions

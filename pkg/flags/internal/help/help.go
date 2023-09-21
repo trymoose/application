@@ -2,12 +2,17 @@ package help
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"io"
 	"os/exec"
+)
+
+const (
+	Name  = "help"
+	Short = "Help options."
+	Long  = "Display help."
 )
 
 var ErrFailedToExit = errors.New("failed to exit")
@@ -17,28 +22,24 @@ type Help struct {
 	QuickHelp func() error       `short:"h" description:"Print application help text and exit."`
 }
 
-func (*Help) Name() string  { return "help" }
-func (*Help) Short() string { return "Help options." }
-func (*Help) Long() string  { return "Display help." }
-
-type Exit[I ~int] struct {
-	CodeHelp I
-	CodeErr  I
-	Exit     func(context.Context, I)
+type Exit struct {
+	CodeHelp int
+	CodeErr  int
+	Exit     func(int)
 }
 
-func New[I ~int](ctx context.Context, exit *Exit[I], p *flags.Parser) *Help {
+func New(exit *Exit, p *flags.Parser) *Help {
 	var buf bytes.Buffer
 	printBuf := func() {
 		fmt.Println(buf.String())
-		exit.Help(ctx)
+		exit.Help()
 	}
 
 	return &Help{
 		Help: func(s string) error {
 			switch s {
 			case "man":
-				if err := _ManPage(ctx, p, &buf); err != nil {
+				if err := _ManPage(p, &buf); err != nil {
 					return err
 				}
 				printBuf()
@@ -48,7 +49,7 @@ func New[I ~int](ctx context.Context, exit *Exit[I], p *flags.Parser) *Help {
 				}
 				printBuf()
 			}
-			exit.Err(ctx)
+			exit.Err()
 			return ErrFailedToExit
 		},
 		QuickHelp: func() error {
@@ -56,16 +57,16 @@ func New[I ~int](ctx context.Context, exit *Exit[I], p *flags.Parser) *Help {
 				return err
 			}
 			printBuf()
-			exit.Err(ctx)
+			exit.Err()
 			return ErrFailedToExit
 		},
 	}
 }
 
-func _ManPage(ctx context.Context, p *flags.Parser, out io.Writer) error {
+func _ManPage(p *flags.Parser, out io.Writer) error {
 	var buf bytes.Buffer
 	p.WriteManPage(&buf)
-	cmd := exec.CommandContext(ctx, "nroff", "-man")
+	cmd := exec.Command("nroff", "-man")
 	cmd.Stdin = &buf
 	cmd.Stdout = out
 	if err := cmd.Run(); err != nil {
@@ -79,5 +80,5 @@ func _Text(p *flags.Parser, out io.Writer) error {
 	return nil
 }
 
-func (e *Exit[I]) Help(ctx context.Context) { e.Exit(ctx, e.CodeHelp) }
-func (e *Exit[I]) Err(ctx context.Context)  { e.Exit(ctx, e.CodeErr) }
+func (e *Exit) Help() { e.Exit(e.CodeHelp) }
+func (e *Exit) Err()  { e.Exit(e.CodeErr) }

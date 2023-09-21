@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
-	"github.com/trymoose/application/internal/pkg/flags"
+	"fmt"
+	"github.com/trymoose/application/pkg/flags"
 	"github.com/trymoose/debug"
-	"github.com/trymoose/errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -14,18 +14,12 @@ import (
 const Debug = debug.Debug
 
 type (
-	Command     = flags.Command
-	RunCommand  = flags.RunCommand
-	SubCommands = flags.SubCommands
+	Info          = flags.Info
+	Commands      = flags.Commands
+	Groups        = flags.Groups
+	Activatable   = flags.Activatable
+	ModifyContext = flags.ModifyContext
 )
-
-type (
-	Group       = flags.Group
-	SubGroups   = flags.SubGroups
-	GroupParsed = flags.GroupParsed
-)
-
-type ModCtx = flags.ModCtx
 
 var _Parser = flags.NewParser(Name(), &flags.ExitCodes[ExitCode]{
 	OK:    ExitCodeOK,
@@ -51,11 +45,17 @@ func LoggerWith(ctx context.Context, args ...any) context.Context {
 func Main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Kill, os.Interrupt)
 	defer cancel()
-	_Parser.Parse(ctx)
+	if p, err := _Parser.Parse(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "failed to parse application args: %v\n", err)
+		os.Exit(int(ExitCodeError))
+	} else if err := p.Run(ctx); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "failed to run application: %v\n", err)
+		os.Exit(int(ExitCodeError))
+	}
 }
 
 // AddGroup adds a group to the root
-func AddGroup(g Group) { errors.Check(_Parser.AddGroup(g)) }
+func AddGroup(g Info) { _Parser.AddGroup(g) }
 
 // AddCommand adds a command to the application.
 // Commands must implement [Command]
@@ -63,7 +63,7 @@ func AddGroup(g Group) { errors.Check(_Parser.AddGroup(g)) }
 // - [RunCommand]
 // - [SubCommands]
 // - [ModCtx]
-func AddCommand(c Command) { errors.Check(_Parser.AddCommand(c)) }
+func AddCommand(c Info) { _Parser.AddCommand(c) }
 
 // ExitCode is a code passed on exit to the os.
 type ExitCode int
