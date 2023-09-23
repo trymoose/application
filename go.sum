@@ -4,7 +4,5 @@ github.com/trymoose/debug v0.0.2 h1:x3j63krXVG9dUmyP00hj1EoN787KpPWShDKOfInh8TE=
 github.com/trymoose/debug v0.0.2/go.mod h1:p6AOlIwtaghar0zw+ymEjt8VaRijUWKDt5Uq0TmMQoo=
 github.com/trymoose/errors v0.0.5 h1:jNdCVKCBOM794M7SzRJgz+cirRO3P1VqCgD2SZdL1tY=
 github.com/trymoose/errors v0.0.5/go.mod h1:CWzzGEej4gVnwoDQYRc78PkOQUaaFYDgZ4R8cVr7AZI=
-golang.org/x/sync v0.2.0 h1:PUR+T4wwASmuSTYdKjYHI5TD22Wy5ogLU5qZCOLxBrI=
-golang.org/x/sync v0.2.0/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 h1:EZ2mChiOa8udjfp6rRmswTbtZN/QzUQp4ptM4rnjHvc=
 golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

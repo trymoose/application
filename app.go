@@ -21,11 +21,12 @@ type (
 	ModifyContext = flags.ModifyContext
 )
 
+var _LogLevel slog.LevelVar
 var _Parser = flags.NewParser(Name(), &flags.ExitCodes[ExitCode]{
 	OK:    ExitCodeOK,
 	Error: ExitCodeError,
 	Help:  ExitCodeHelp,
-})
+}, &_LogLevel)
 
 func AddHelpGroup()   { _Parser.AddHelpGroup() }
 func AddLoggerGroup() { _Parser.AddLoggerGroup() }
@@ -41,6 +42,8 @@ func Logger(ctx context.Context) *slog.Logger  { return flags.ContextLogger(ctx)
 func LoggerWith(ctx context.Context, args ...any) context.Context {
 	return flags.ContextLoggerWith(ctx, args...)
 }
+func GetLogLevel() slog.Level  { return _LogLevel.Level() }
+func SetLogLevel(l slog.Level) { _LogLevel.Set(l) }
 
 func Main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Kill, os.Interrupt)

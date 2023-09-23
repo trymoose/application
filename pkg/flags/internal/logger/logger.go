@@ -22,12 +22,14 @@ type Logger struct {
 	output.OutputOptions
 	handler.HandlerOptions
 
-	_CtxKey any
-	_Close  io.Closer
+	_CtxKey   any
+	_Close    io.Closer
+	_LevelVar *slog.LevelVar
 }
 
-func New(ctxKey any) *Logger {
-	l := &Logger{_CtxKey: ctxKey}
+func New(ctxKey any, logLevel *slog.LevelVar) *Logger {
+	l := &Logger{_CtxKey: ctxKey, _LevelVar: logLevel}
+	l._LevelVar.Set(slog.LevelInfo)
 	l._SetNoopCloser()
 	return l
 }
@@ -49,8 +51,9 @@ func (l *Logger) ModCtx(ctx context.Context) (context.Context, error) {
 	}
 	l._Close = f
 
+	l._LevelVar.Set(l.LevelOptions.Get().Level())
 	return context.WithValue(ctx, l._CtxKey, slog.New(l.HandlerOptions.Get()(f, &slog.HandlerOptions{
 		AddSource: l.SourceOptions.Get(),
-		Level:     l.LevelOptions.Get(),
+		Level:     l._LevelVar,
 	}))), nil
 }

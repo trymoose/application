@@ -3,9 +3,9 @@ package help
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/jessevdk/go-flags"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -31,7 +31,7 @@ type Exit struct {
 func New(exit *Exit, p *flags.Parser) *Help {
 	var buf bytes.Buffer
 	printBuf := func() {
-		fmt.Println(buf.String())
+		_, _ = io.Copy(os.Stderr, &buf)
 		exit.Help()
 	}
 

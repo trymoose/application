@@ -4,6 +4,10 @@ Golang application skeleton.
 
 Uses flags library [go-flags](https://github.com/jessevdk/go-flags).
 
+## Create new project
+
+`go run github.com/trymoose/application/cmd <application name>`
+
 ## Usage
 
 Create your main file like this:

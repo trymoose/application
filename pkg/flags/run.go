@@ -38,6 +38,10 @@ func (p *Parsed) Run(ctx context.Context) error {
 }
 
 func _Run(a *_Activated, ctx context.Context) (err error) {
+	if a == nil {
+		return nil
+	}
+
 	for _, a := range append(a.Groups, a.Command) {
 		if ctx, err = a.ModifyContext(ctx); err != nil {
 			return err
@@ -50,10 +54,7 @@ func _Run(a *_Activated, ctx context.Context) (err error) {
 		}
 	}
 
-	if a.Next != nil {
-		return _Run(a.Next, ctx)
-	}
-	return nil
+	return _Run(a.Next, ctx)
 }
 
 func _DefaultLogger() any {

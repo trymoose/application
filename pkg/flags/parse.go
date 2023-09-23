@@ -2,10 +2,12 @@ package flags
 
 import (
 	"context"
+	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/trymoose/application/pkg/flags/internal/help"
 	"github.com/trymoose/application/pkg/flags/internal/logger"
 	"github.com/trymoose/errors"
+	"log/slog"
 	"os"
 )
 
@@ -15,6 +17,7 @@ type Parsed struct {
 	_Logger    *logger.Logger
 	_Activated *_Activated
 	_ExitCodes *ExitCodes[int]
+	_LogLevel  *slog.LevelVar
 }
 
 type (
@@ -38,6 +41,7 @@ func _Parse(info *Parser) (_ *Parsed, finalErr error) {
 	p := Parsed{
 		_Parser:    flags.NewNamedParser(info._Name, info._ParserFlags),
 		_ExitCodes: info._ExitCodes,
+		_LogLevel:  info._LogLevel,
 	}
 	p._Parser.CommandHandler = func(flags.Commander, []string) error { return nil }
 
@@ -54,6 +58,13 @@ func _Parse(info *Parser) (_ *Parsed, finalErr error) {
 
 	args, err := p._Parser.Parse()
 	if err != nil {
+		flagErr, ok := errors.To[*flags.Error](err)
+		if !ok {
+			return nil, errors.New("non flag error returned: %w", err)
+		} else if flagErr.Type == flags.ErrCommandRequired {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			return nil, errors.Join(p._CreateHelp().QuickHelp(), err)
+		}
 		return nil, err
 	}
 	p._Args = args
@@ -75,14 +86,13 @@ func (p *Parsed) _CollectActivated(cmd *flags.Command, commands _ParseMap[_FlgCm
 
 	if cmd.Active != nil {
 		a.Next = p._CollectActivated(cmd.Active, commands, groups)
-		return &a
 	}
-	return nil
+	return &a
 }
 
 func (p *Parsed) _AddBuiltInGroups(groups []Info, addLogger, addHelp bool) []Info {
 	if addLogger {
-		p._Logger = logger.New(_ContextKeyLogger)
+		p._Logger = logger.New(_ContextKeyLogger, p._LogLevel)
 		groups = append(groups, p._LoggerGroup())
 	}
 
@@ -97,14 +107,16 @@ func (p *Parsed) _HelpGroup() Info {
 		Name:  help.Name,
 		Short: help.Short,
 		Long:  help.Long,
-		New: func() any {
-			return help.New[int](&help.Exit{
-				CodeHelp: p._ExitCodes.Help,
-				CodeErr:  p._ExitCodes.Error,
-				Exit:     os.Exit,
-			}, p._Parser)
-		},
+		New:   func() any { return p._CreateHelp() },
 	}
+}
+
+func (p *Parsed) _CreateHelp() *help.Help {
+	return help.New(&help.Exit{
+		CodeHelp: p._ExitCodes.Help,
+		CodeErr:  p._ExitCodes.Error,
+		Exit:     os.Exit,
+	}, p._Parser)
 }
 
 func (p *Parsed) _LoggerGroup() Info {
